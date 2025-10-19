@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(LiverpoolDbContext))]
-    [Migration("20251013220812_Initial")]
+    [Migration("20251019164405_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -92,10 +92,19 @@ namespace Api.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ImageBase64")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
 
                     b.ToTable("Events");
                 });
@@ -108,14 +117,9 @@ namespace Api.Migrations
                     b.Property<long>("EventId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("EventId1")
-                        .HasColumnType("bigint");
-
                     b.HasKey("TagId", "EventId");
 
                     b.HasIndex("EventId");
-
-                    b.HasIndex("EventId1");
 
                     b.ToTable("EventTags");
                 });
@@ -131,8 +135,9 @@ namespace Api.Migrations
                     b.Property<DateOnly>("DateOfBirth")
                         .HasColumnType("date");
 
-                    b.Property<long>("Description")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -142,12 +147,20 @@ namespace Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Nickname")
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordSalt")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("VerifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -194,7 +207,7 @@ namespace Api.Migrations
             modelBuilder.Entity("Api.Entities.Event.Attendee", b =>
                 {
                     b.HasOne("Api.Entities.Event.Event", "Event")
-                        .WithMany()
+                        .WithMany("Attendees")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -210,17 +223,24 @@ namespace Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Api.Entities.Event.Event", b =>
+                {
+                    b.HasOne("Api.Entities.User.User", "Creator")
+                        .WithMany("Events")
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+                });
+
             modelBuilder.Entity("Api.Entities.Event.EventTag", b =>
                 {
-                    b.HasOne("Api.Entities.Event.Event", null)
+                    b.HasOne("Api.Entities.Event.Event", "Event")
                         .WithMany("Tags")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Api.Entities.Event.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId1");
 
                     b.HasOne("Api.Entities.Common.Tag", "Tag")
                         .WithMany()
@@ -260,11 +280,15 @@ namespace Api.Migrations
 
             modelBuilder.Entity("Api.Entities.Event.Event", b =>
                 {
+                    b.Navigation("Attendees");
+
                     b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Api.Entities.User.User", b =>
                 {
+                    b.Navigation("Events");
+
                     b.Navigation("Ratings");
                 });
 #pragma warning restore 612, 618

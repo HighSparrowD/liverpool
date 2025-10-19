@@ -2,21 +2,21 @@ namespace Api.Models.User;
 
 public record User
 {
-    public required long Id { get; set; }
+    public long Id { get; set; }
 
-    public required string Nickname { get; set; }
+    public string Username { get; set; }
     
-    public required string FirstName { get; set; }
+    public string FirstName { get; set; }
     
-    public required string LastName { get; set; }
+    public string LastName { get; set; }
     
-    public required long Description { get; set; }
+    public string Description { get; set; }
 
-    public required short Age { get; set; }
+    public DateOnly DateOfBirth { get; set; }
     
     public bool Verified { get; set; }
 
     public byte Rating { get; set; }
     
-    public required DateTime RegisteredAt { get; set; }
+    public DateTime RegisteredAt { get; set; }
 }
