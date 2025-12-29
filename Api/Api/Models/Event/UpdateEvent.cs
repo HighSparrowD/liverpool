@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Api.Models.Event;
 
-public class CreateEvent
+public class UpdateEvent
 {
-    public required string CreatorUsername { get; set; }
+    public required long EventId { get; set; }
 
     public required string Title { get; set; }
     

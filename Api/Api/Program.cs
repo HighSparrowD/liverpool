@@ -1,5 +1,6 @@
 using Api.Configuration;
 using Api.Data;
+using Api.Services;
 using Api.Services.Event;
 using Api.Services.User;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ builder.Services.Configure<AppConfiguration>(
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
 
 builder.Services.AddDbContext<LiverpoolDbContext>((sp, options) =>

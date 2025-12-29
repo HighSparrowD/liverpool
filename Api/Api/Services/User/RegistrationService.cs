@@ -9,9 +9,9 @@ public class RegistrationService(LiverpoolDbContext dbContext, TimeProvider time
 {
     public async Task<Models.User.User> CreateUser(CreateUser model)
     {
-        var exisingUser = await GetExistingUser(model.Username);
+        var existingUser = await GetExistingUser(model.Username);
         
-        if (exisingUser != null)
+        if (existingUser != null)
             throw new ApplicationException($"Username {model.Username} is already taken");
             
         var user = new Entities.User.User()
@@ -23,6 +23,7 @@ public class RegistrationService(LiverpoolDbContext dbContext, TimeProvider time
             DateOfBirth = model.DateOfBirth,
             PasswordHash = string.Empty,
             PasswordSalt = string.Empty,
+            ProfilePictureBase64 = string.Empty,
             RegisteredAt = timeProvider.GetUtcNow().UtcDateTime
         };
         
@@ -31,6 +32,29 @@ public class RegistrationService(LiverpoolDbContext dbContext, TimeProvider time
         await dbContext.Users.AddAsync(user);
         await dbContext.SaveChangesAsync();
         return user.ToDto();
+    }
+
+    public async Task<Models.User.User> UpdateUser(UpdateUser model)
+    {
+        var existingUser = await GetExistingUser(model.Username);
+        
+        if (existingUser == null)
+            throw new ApplicationException($"User {model.Username} does not exist.");
+        
+        existingUser.FirstName = model.FirstName;
+        existingUser.LastName = model.LastName;
+        existingUser.Username = model.Username;
+        existingUser.Description = model.Description;
+        existingUser.DateOfBirth = model.DateOfBirth;
+        existingUser.ProfilePictureBase64 = model.PhotoBase64;
+        existingUser.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
+        
+        // Changed password if one is provided
+        if (!string.IsNullOrEmpty(model.Password))
+            existingUser.HashPassword(model.Password);
+        
+        await dbContext.SaveChangesAsync();
+        return existingUser.ToDto();
     }
 
     public async Task<Models.User.User> LoginUser(LoginUser model)

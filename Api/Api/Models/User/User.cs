@@ -11,7 +11,9 @@ public record User
     public string LastName { get; set; }
     
     public string Description { get; set; }
-
+    
+    public string? ProfilePictureBase64 { get; set; }
+    
     public DateOnly DateOfBirth { get; set; }
     
     public bool Verified { get; set; }

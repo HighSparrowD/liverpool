@@ -6,4 +6,9 @@ public static class DateTimeExtensions
     {
         return dateTime.ToUniversalTime();
     }
+
+    public static DateTime DropSecondsAndNormalize(this DateTime value)
+    {
+        return new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute, 0).NormalizeDateTime();
+    }
 }

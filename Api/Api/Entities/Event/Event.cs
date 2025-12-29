@@ -17,6 +17,8 @@ public record Event : ILiverpoolEntity<Models.Event.Event>
     
     public required DateTime CreatedAt { get; set; }
     
+    public required DateTime? UpdatedAt { get; set; }
+    
     public required DateTime StartDate { get; set; }
     
     public required DateTime EndDate { get; set; }

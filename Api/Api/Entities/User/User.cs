@@ -15,6 +15,8 @@ public record User : ILiverpoolEntity<Models.User.User>, IUser
     
     public required string Description { get; set; }
     
+    public required string? ProfilePictureBase64 { get; set; }
+    
     public required string PasswordHash { get; set; }
 
     public required string PasswordSalt { get; set; }
@@ -24,6 +26,8 @@ public record User : ILiverpoolEntity<Models.User.User>, IUser
     public required DateOnly DateOfBirth { get; set; }
     
     public required DateTime RegisteredAt { get; set; }
+    
+    public DateTime UpdatedAt { get; set; }
     
     public virtual List<UserRating>? Ratings { get; set; }
     
@@ -39,6 +43,7 @@ public record User : ILiverpoolEntity<Models.User.User>, IUser
             FirstName = FirstName,
             LastName = LastName,
             Description = Description,
+            ProfilePictureBase64 = ProfilePictureBase64,
             RegisteredAt = RegisteredAt
         };
     }
