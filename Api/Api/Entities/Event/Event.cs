@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using Api.Entities.Common;
 
@@ -41,7 +42,8 @@ public record Event : ILiverpoolEntity<Models.Event.Event>
             CreatedAt = CreatedAt,
             StartDate = StartDate,
             EndDate = EndDate,
-            Creator =  Creator?.ToDto()
+            Creator =  Creator?.ToDto(),
+            Tags = Tags?.Select(x => x.TagId).ToList()
         };
     }
 }

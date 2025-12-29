@@ -22,6 +22,8 @@ public record Event
     public DateTime EndDate { get; set; }
 
     public User.User? Creator { get; set; }
+
+    public List<long>? Tags { get; set; }
     
     public List<Attendee>? Attendees { get; set; }
 }

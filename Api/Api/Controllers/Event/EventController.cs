@@ -23,7 +23,7 @@ public class EventController(IEventService eventService) : Controller
     }
     
     [HttpPost("search")]
-    public async Task<ActionResult<IEnumerable<Models.Event.Event>>> GetEvents([FromBody] SearchModel model)
+    public async Task<ActionResult<IEnumerable<Models.Event.Event>>> SearchEvents([FromBody] SearchModel model)
     {
         var evnts = await eventService.SearchEvents(model);
 

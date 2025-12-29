@@ -1,9 +1,9 @@
-using Npgsql.Replication.PgOutput;
-
 namespace Api.Models.Event;
 
 public record SearchModel
 {
+    public long SearcherId { get; set; }
+    
     public string? Title { get; set; }
     
     public string? CreatorName { get; set; }

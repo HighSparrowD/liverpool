@@ -8,11 +8,13 @@ public record Attendee
     
     public required long EventId { get; set; }
 
+    public AttendeeStatus? Status { get; set; }
+    
     public DateTime? ApprovedAt { get; set; }
     
     public DateTime? RejectedAt { get; set; }
     
-    public virtual User.User? User { get; set; }
+    public User.User? User { get; set; }
     
-    public virtual Event? Event { get; set; }
+    public Event? Event { get; set; }
 }

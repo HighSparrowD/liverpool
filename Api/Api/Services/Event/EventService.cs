@@ -11,7 +11,8 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
 {
     public async Task<Models.Event.Event> GetEventById(long id)
     {
-        var evnt = await dbContext.Events.FirstOrDefaultAsync(x => x.Id == id);
+        var evnt = await dbContext.Events.Include(x => x.Tags)
+            .FirstOrDefaultAsync(x => x.Id == id);
         
         if (evnt == null)
             return new Models.Event.Event();
@@ -41,7 +42,10 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
             UpdatedAt = null,
             CreatedAt = timeProvider.GetUtcNow().UtcDateTime
         };
-
+        
+        await dbContext.AddAsync(evnt);
+        await dbContext.SaveChangesAsync();
+        
         if (model.Tags != null)
         {
             // Add tags
@@ -51,8 +55,7 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
                 EventId = evnt.Id
             }));
         }
-
-        await dbContext.AddAsync(evnt);
+        
         await dbContext.SaveChangesAsync();
         return evnt.ToDto();
     }
@@ -100,7 +103,8 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
 
     public async Task<IEnumerable<Models.Event.Event>> SearchEvents(SearchModel model)
     {
-        IQueryable<Entities.Event.Event> events = dbContext.Events;
+        IQueryable<Entities.Event.Event> events = dbContext.Events
+            .Where(x => x.CreatorId != model.SearcherId);
         
         if (!string.IsNullOrEmpty(model.Title)) 
             events = events.Where(x => x.Title.Contains(model.Title));

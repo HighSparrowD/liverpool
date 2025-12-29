@@ -31,6 +31,7 @@ public class UserController(IRegistrationService registrationService, IUserServi
     [HttpPost("login")]
     public async Task<ActionResult<Models.User.User>> LoginUser([FromBody] LoginUser model)
     {
+        
         var user = await registrationService.LoginUser(model);
         return Ok(user);
     }
