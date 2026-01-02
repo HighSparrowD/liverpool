@@ -7,4 +7,8 @@ public interface IAttendeeService
     Task<Attendee?> GetAttendee(long userId, long eventId);
     
     Task<Attendee> ApplyToAttend(ParticipationModel model);
+    
+    Task<List<Attendee>> GetAttendees(GetAttendees model);
+    
+    Task<Attendee> ReviewAttendance(ParticipationReviewModel model);
 }
