@@ -17,4 +17,6 @@ public interface IEventService
     Task<IEnumerable<Models.Event.Event>> SearchEvents(SearchModel model);
     
     Task<IEnumerable<Models.Common.Tag>> GetCommonTags();
+    
+    Task<IEnumerable<EventChatPreview>> GetEventChatPreviews(long userId);
 }

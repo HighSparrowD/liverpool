@@ -1,6 +1,5 @@
-using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations;
 using Api.Entities.Common;
+using Api.Models.Event;
 
 namespace Api.Entities.Event;
 
@@ -44,6 +43,15 @@ public record Event : ILiverpoolEntity<Models.Event.Event>
             EndDate = EndDate,
             Creator =  Creator?.ToDto(),
             Tags = Tags?.Select(x => x.TagId).ToList()
+        };
+    }
+    
+    public EventChatPreview ToChatPreview()
+    {
+        return new EventChatPreview()
+        {
+            Id = Id,
+            Title = Title
         };
     }
 }

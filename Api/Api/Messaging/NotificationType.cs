@@ -11,5 +11,6 @@ public enum NotificationType
     EventCancelled,
     EventUpcoming,
     EventChanged,
-    NewAttendee
+    NewAttendee, 
+    NewMessage
 }

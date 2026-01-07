@@ -1,13 +1,18 @@
 using Api.Data;
 using Api.Entities.Event;
 using Api.Extensions;
+using Api.Messaging;
 using Api.Models.Common;
 using Api.Models.Event;
+using Api.Services.Notification;
+using Api.Services.Redis;
+using MessagePack;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services.Event;
 
-public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvider) : IEventService
+public class EventService(LiverpoolDbContext dbContext, ILiverpoolRedis redis, INotificationService notificationService,
+    TimeProvider timeProvider) : IEventService
 {
     public async Task<Models.Event.Event> GetEventById(long id)
     {
@@ -63,6 +68,7 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
     public async Task<Models.Event.Event> UpdateEvent(UpdateEvent model)
     {
         var evnt = await dbContext.Events.FirstOrDefaultAsync(x => x.Id == model.EventId);
+        
         if (evnt == null)
             throw new ApplicationException($"Event with id {model.EventId} does not exist.");
         
@@ -89,6 +95,15 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
         }
         
         await dbContext.SaveChangesAsync();
+        
+        var attendees = await dbContext.Attendee.Include(x => x.User)
+            .Where(x => x.EventId == model.EventId)
+            .Select(x => x.User!.Username)
+            .ToListAsync();
+        
+        foreach (var attendee in attendees)
+            await notificationService.NotifyEventChanged(attendee, model.EventId);
+        
         return evnt.ToDto();
     }
 
@@ -132,5 +147,62 @@ public class EventService(LiverpoolDbContext dbContext, TimeProvider timeProvide
             .ToListAsync();
 
         return tags;
+    }
+
+    public async Task<IEnumerable<EventChatPreview>> GetEventChatPreviews(long userId)
+    {
+        var eventPreviews = await dbContext.Events.Include(x => x.Attendees)
+            .Where(x => x.Attendees!.Any(a => a.UserId == userId && a.Status == Entities.Event.AttendeeStatus.Approved) 
+                        || x.CreatorId == userId)
+            .Select(x => x.ToChatPreview())
+            .ToListAsync();
+        
+        if (eventPreviews.Count == 0)
+            return eventPreviews;
+        
+        var db = redis.GetDatabase();
+        foreach (var eventPreview in eventPreviews)
+        {
+            var message = await db.ListGetByIndexAsync($"Messages:{eventPreview.Id}", -1);
+            
+            if (!message.HasValue)
+                continue;
+            
+            var messageObject = MessagePackSerializer.Deserialize<ChatMessage>((byte[])message);
+        
+            eventPreview.LastMessage = messageObject;
+        }
+
+        // var eventPreviews = new List<EventChatPreview>()
+        // {
+        //     new EventChatPreview
+        //     {
+        //         Id = 4,
+        //         Title = "Testing event",
+        //         LastMessage = new ChatMessage
+        //         {
+        //             SentAt = new DateTime(2025, 6, 10),
+        //             Message = "Hello World!",
+        //             Username = "dude",
+        //             MessageId = Guid.NewGuid(),
+        //             EventId = 4
+        //         }
+        //     },
+        //     new EventChatPreview
+        //     {
+        //         Id = 5,
+        //         Title = "Image event!",
+        //         LastMessage = new ChatMessage
+        //         {
+        //             SentAt = new DateTime(2025, 12, 31),
+        //             Message = "Hello World!",
+        //             AttachmentBase64 = "something image",
+        //             Username = "dude",
+        //             MessageId = Guid.NewGuid(),
+        //             EventId = 5
+        //         }
+        //     }
+        // };
+        return eventPreviews;
     }
 }

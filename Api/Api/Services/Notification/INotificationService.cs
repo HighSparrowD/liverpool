@@ -17,6 +17,10 @@ public interface INotificationService
     Task<Messaging.Notification> NotifyEventUpcoming(string username, long eventId);
     
     Task<Messaging.Notification> NotifyEventChanged(string username, long eventId);
+
+    Task<Messaging.Notification> NotifyNewMessage(string username, long eventId);
     
     Task<Messaging.Notification> Notify(NotificationType type, string username, long? eventId = null);
+    
+    Task<IEnumerable<Messaging.Notification>> GetNotifications(string username);
 }

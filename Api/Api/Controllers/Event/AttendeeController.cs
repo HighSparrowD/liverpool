@@ -1,12 +1,13 @@
+using Api.Messaging;
 using Api.Models.Event;
+using Api.Services.Chat;
 using Api.Services.Event;
-using Api.Services.Notification;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Event;
 
 [Route("/api/attendee")]
-public class AttendeeController(IAttendeeService attendeeService, INotificationService notificationService) : Controller
+public class AttendeeController(IAttendeeService attendeeService, IChatService chatService) : Controller
 {
     [HttpGet]
     public async Task<ActionResult<Attendee?>> GetAttendee([FromQuery] long userId, [FromQuery] long eventId)

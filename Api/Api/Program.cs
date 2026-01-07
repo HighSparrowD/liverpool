@@ -3,6 +3,7 @@ using Api.Data;
 using Api.Messaging.SignalR;
 using Api.Services;
 using Api.Services.Background;
+using Api.Services.Chat;
 using Api.Services.Event;
 using Api.Services.Notification;
 using Api.Services.Redis;
@@ -26,13 +27,14 @@ builder.Services.Configure<AppConfiguration>(
     builder.Configuration.GetSection("AppConfiguration")
 );
 
-builder.Services.AddHostedService<NotificationHostedService>();
+//builder.Services.AddHostedService<NotificationHostedService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAttendeeService, AttendeeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ILiverpoolRedis, LiverpoolRedis>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(x =>
 {
@@ -82,8 +84,11 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowLocalhost");
 app.UseRouting();
 app.MapControllers();
-app.MapHub<NotificationHub>("/notificationHub");
 app.UseHttpsRedirection();
+
+// SignalR stuff
+app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<MessagingHub>("/messagingHub");
 
 // Apply pending migrations
 if (app.Environment.IsDevelopment())

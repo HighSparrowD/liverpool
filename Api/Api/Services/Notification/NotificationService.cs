@@ -29,7 +29,10 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
     
     public async Task<Messaging.Notification> NotifyNewAttendee(string username, long eventId)
         => await Notify(NotificationType.NewAttendee, username, eventId);
-
+    
+    public async Task<Messaging.Notification> NotifyNewMessage(string username, long eventId)
+        => await Notify(NotificationType.NewMessage, username, eventId);
+    
     public async Task<Messaging.Notification> Notify(NotificationType type, string username, long? eventId = null)
     {
         var db = redis.GetDatabase();
@@ -39,14 +42,14 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
             EventId = eventId
         };
         
-        var connectionId = await db.StringGetAsync(username);
+        var connectionId = await db.StringGetAsync($"{NotificationHub.REDIS_PREFIX}:{username}");
 
         // Store message in redis list for later
         if (!connectionId.HasValue)
         {
             var packedMessage = MessagePackSerializer.Serialize(message);
-            await db.SetAddAsync("PendingMessages", username);
-            db.ListLeftPush($"Messages:{username}", packedMessage);
+            await db.SetAddAsync("PendingNotifications", username);
+            await db.ListLeftPushAsync($"Notifications:{username}", packedMessage);
             
             return message;
         }
@@ -54,5 +57,14 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
         var msgJson = JsonSerializer.Serialize(message);
         await hubContext.Clients.Group(username).SendAsync("ReceiveNotification", msgJson);
         return message;
+    }
+
+    public async Task<IEnumerable<Messaging.Notification>> GetNotifications(string username)
+    { 
+        var db = redis.GetDatabase();
+        var notifications = await db.ListRangeAsync($"Notifications:{username}");
+        
+        return notifications.Select(x => MessagePackSerializer
+            .Deserialize<Messaging.Notification>((byte[])x)).ToList();
     }
 }
