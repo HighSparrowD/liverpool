@@ -14,6 +14,8 @@ public record Event
     public string? ImageBase64 { get; set; }
     
     public string Description { get; set; }
+
+    public string? WelcomeMessage { get; set; }
     
     public DateTime CreatedAt { get; set; }
     

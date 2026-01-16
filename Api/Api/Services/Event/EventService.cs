@@ -4,15 +4,18 @@ using Api.Extensions;
 using Api.Messaging;
 using Api.Models.Common;
 using Api.Models.Event;
+using Api.Services.Chat;
 using Api.Services.Notification;
 using Api.Services.Redis;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
+using Attendee = Api.Entities.Event.Attendee;
+using AttendeeStatus = Api.Entities.Event.AttendeeStatus;
 
 namespace Api.Services.Event;
 
 public class EventService(LiverpoolDbContext dbContext, ILiverpoolRedis redis, INotificationService notificationService,
-    TimeProvider timeProvider) : IEventService
+    IChatService chatService, TimeProvider timeProvider) : IEventService
 {
     public async Task<Models.Event.Event> GetEventById(long id)
     {
@@ -42,6 +45,7 @@ public class EventService(LiverpoolDbContext dbContext, ILiverpoolRedis redis, I
             Title = model.Title,
             ImageBase64 = model.ImageBase64,
             Description = model.Description,
+            WelcomeMessage = model.WelcomeMessage,
             StartDate = model.StartDate.DropSecondsAndNormalize(),
             EndDate = model.EndDate.DropSecondsAndNormalize(),
             UpdatedAt = null,
@@ -50,6 +54,24 @@ public class EventService(LiverpoolDbContext dbContext, ILiverpoolRedis redis, I
         
         await dbContext.AddAsync(evnt);
         await dbContext.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(model.WelcomeMessage))
+        {
+            await chatService.SendMessage(new ChatMessage
+            {
+                EventId = evnt.Id,
+                Username = user.Username,
+                Message = model.WelcomeMessage,
+                Type = ChatMessageType.Welcome
+            });
+        }
+
+        await dbContext.Attendee.AddAsync(new Attendee
+        {
+            UserId = user.Id,
+            EventId = evnt.Id,
+            Status = AttendeeStatus.None
+        });
         
         if (model.Tags != null)
         {
@@ -111,6 +133,22 @@ public class EventService(LiverpoolDbContext dbContext, ILiverpoolRedis redis, I
     {
         var events = await dbContext.Events.Include(x => x.Creator)
             .Where(x => x.Creator.Username == username)
+            .Select(x => x.ToDto()).ToListAsync();
+        
+        return events;
+    }
+
+    public async Task<IEnumerable<Models.Event.Event>> GetAttendingEvents(string username)
+    {
+        long? userId = await dbContext.Users.Where(x => x.Username == username)
+            .Select(x => x.Id).FirstOrDefaultAsync();
+        
+        if (userId == null)
+            throw new ApplicationException($"User with username {username} does not exist.");
+        
+        var events = await dbContext.Events.Include(x => x.Attendees)
+            .Where(x => x.Attendees.Any(x => (x.UserId == userId && x.Status == AttendeeStatus.Approved))
+                        && x.CreatorId != userId)
             .Select(x => x.ToDto()).ToListAsync();
         
         return events;

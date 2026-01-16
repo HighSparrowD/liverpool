@@ -1,6 +1,8 @@
 using Api.Data;
 using Api.Models.Event;
 using Api.Entities.Event;
+using Api.Messaging;
+using Api.Services.Chat;
 using Api.Services.Notification;
 using Microsoft.EntityFrameworkCore;
 using Attendee = Api.Entities.Event.Attendee;
@@ -8,7 +10,8 @@ using AttendeeStatus = Api.Entities.Event.AttendeeStatus;
 
 namespace Api.Services.Event;
 
-public class AttendeeService(LiverpoolDbContext dbContext, INotificationService notificationService) : IAttendeeService
+public class AttendeeService(LiverpoolDbContext dbContext, INotificationService notificationService,
+    IChatService chatService) : IAttendeeService
 {
     public async Task<Models.Event.Attendee?> GetAttendee(long userId, long eventId)
     {
@@ -58,11 +61,13 @@ public class AttendeeService(LiverpoolDbContext dbContext, INotificationService 
 
     public async Task<List<Models.Event.Attendee>> GetAttendees(GetAttendees model)
     {
-        var attendees = await dbContext.Attendee
-            .Where(x => x.EventId == model.EventId && x.Status == (AttendeeStatus)model.AttendeeStatus)
-            .Include(x => x.User).Select(x => x.ToDto()).ToListAsync();
+        var attendees = dbContext.Attendee
+            .Where(x => x.EventId == model.EventId && x.Status == (AttendeeStatus)model.AttendeeStatus);
         
-        return attendees;
+        if (model.GetCreator)
+            attendees = attendees.Where(x => x.Status == AttendeeStatus.None);
+        
+        return await attendees.Include(x => x.User).Select(x => x.ToDto()).ToListAsync();
     }
 
     public async Task<Models.Event.Attendee> ReviewAttendance(ParticipationReviewModel model)
@@ -82,6 +87,14 @@ public class AttendeeService(LiverpoolDbContext dbContext, INotificationService 
         }
         else if (model.IsAccepted)
         {
+            await chatService.SendMessage(new ChatMessage
+            {
+                EventId = model.EventId,
+                Username = username,
+                Message = $"User {username} has joined the chat.",
+                Type = ChatMessageType.System
+            });
+            
             await notificationService.NotifyUserAccepted(username, model.EventId);
             attendee.Status = AttendeeStatus.Approved;
         }
@@ -92,6 +105,33 @@ public class AttendeeService(LiverpoolDbContext dbContext, INotificationService 
         }
         
         await dbContext.SaveChangesAsync();
+        return attendee.ToDto();
+    }
+
+    public async Task<Models.Event.Attendee> UnattendEvent(UnattendModel model)
+    {
+        var attendee = await dbContext.Attendee.Include(x => x.User)
+            .Where(x => x.EventId == model.EventId && x.UserId == model.UserId).FirstOrDefaultAsync();
+        
+        if (attendee == null)
+            throw new ApplicationException($"Attendee {model.UserId} does not exist.");
+        
+        attendee.Status = AttendeeStatus.Left;
+
+        var creatorUsername = await dbContext.Events.Include(x => x.Creator)
+            .Select(x => x.Creator.Username).FirstOrDefaultAsync();
+        
+        await chatService.SendMessage(new ChatMessage
+        {
+            EventId = model.EventId,
+            Username = attendee.User.Username,
+            Message = $"User {attendee.User.Username} has left the chat.",
+            Type = ChatMessageType.System
+        });
+        
+        await notificationService.NotifyUserLeft(creatorUsername, model.EventId);
+        await dbContext.SaveChangesAsync();
+        
         return attendee.ToDto();
     }
 }

@@ -17,7 +17,10 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
 
     public async Task<Messaging.Notification> NotifyUserRemoved(string username, long eventId)
         => await Notify(NotificationType.EventUserRemoved, username, eventId);
-
+    
+    public async Task<Messaging.Notification> NotifyUserLeft(string username, long eventId)
+        => await Notify(NotificationType.EventUserLeft, username, eventId);
+    
     public async Task<Messaging.Notification> NotifyEventCancelled(string username, long eventId)
         => await Notify(NotificationType.EventCancelled, username, eventId);
 
@@ -48,7 +51,7 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
         if (!connectionId.HasValue)
         {
             var packedMessage = MessagePackSerializer.Serialize(message);
-            await db.SetAddAsync("PendingNotifications", username);
+            // await db.SetAddAsync("PendingNotifications", username);
             await db.ListLeftPushAsync($"Notifications:{username}", packedMessage);
             
             return message;
@@ -63,6 +66,7 @@ public class NotificationService(IHubContext<NotificationHub> hubContext, ILiver
     { 
         var db = redis.GetDatabase();
         var notifications = await db.ListRangeAsync($"Notifications:{username}");
+        await db.KeyDeleteAsync($"Notifications:{username}");
         
         return notifications.Select(x => MessagePackSerializer
             .Deserialize<Messaging.Notification>((byte[])x)).ToList();

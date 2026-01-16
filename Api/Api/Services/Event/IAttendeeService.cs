@@ -11,4 +11,6 @@ public interface IAttendeeService
     Task<List<Attendee>> GetAttendees(GetAttendees model);
     
     Task<Attendee> ReviewAttendance(ParticipationReviewModel model);
+    
+    Task<Attendee> UnattendEvent(UnattendModel model);
 }

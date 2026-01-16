@@ -14,6 +14,13 @@ public class EventController(IEventService eventService) : Controller
         return Ok(events);
     }
     
+    [HttpGet("attending/list")]
+    public async Task<ActionResult<IEnumerable<Models.Event.Event>>> GetAttendingEvents([FromQuery] string username)
+    {
+        var events = await eventService.GetAttendingEvents(username);
+        return Ok(events);
+    }
+    
     [HttpGet]
     public async Task<ActionResult<Models.Event.Event>> GetEvent([FromQuery] long id)
     {

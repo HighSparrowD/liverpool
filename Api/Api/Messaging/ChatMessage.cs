@@ -19,4 +19,6 @@ public record ChatMessage
     [MessagePack.Key(5)] public long? RepliedTo { get; set; }
     
     [MessagePack.Key(6), Base64String] public string? AttachmentBase64 { get; set; }
+
+    [MessagePack.Key(7)] public ChatMessageType Type { get; set; } = ChatMessageType.Normal;
 }

@@ -8,6 +8,7 @@ public enum NotificationType
     EventUserAccepted,
     EventUserDenied,
     EventUserRemoved,
+    EventUserLeft,
     EventCancelled,
     EventUpcoming,
     EventChanged,

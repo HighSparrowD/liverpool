@@ -15,6 +15,8 @@ public record Event : ILiverpoolEntity<Models.Event.Event>
     
     public required string Description { get; set; }
     
+    public string? WelcomeMessage { get; set; }
+    
     public required DateTime CreatedAt { get; set; }
     
     public required DateTime? UpdatedAt { get; set; }
@@ -37,6 +39,7 @@ public record Event : ILiverpoolEntity<Models.Event.Event>
             CreatorId = CreatorId,
             Title = Title,
             Description = Description,
+            WelcomeMessage = WelcomeMessage,
             ImageBase64 = ImageBase64,
             CreatedAt = CreatedAt,
             StartDate = StartDate,

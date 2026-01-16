@@ -14,6 +14,8 @@ public interface IEventService
     
     Task<IEnumerable<Models.Event.Event>> GetEventsByUsername(string username);
     
+    Task<IEnumerable<Models.Event.Event>> GetAttendingEvents(string username);
+    
     Task<IEnumerable<Models.Event.Event>> SearchEvents(SearchModel model);
     
     Task<IEnumerable<Models.Common.Tag>> GetCommonTags();

@@ -36,4 +36,11 @@ public class AttendeeController(IAttendeeService attendeeService, IChatService c
         var attendee = await attendeeService.ReviewAttendance(model);
         return Ok(attendee);
     }
+    
+    [HttpPost("unattend")]
+    public async Task<ActionResult<Attendee?>> Review([FromBody] UnattendModel model)
+    {
+        var attendee = await attendeeService.UnattendEvent(model);
+        return Ok(attendee);
+    }
 }
